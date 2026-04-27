@@ -1,10 +1,6 @@
 {
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/", "destination": "/index.html" },
-    { "source": "/login", "destination": "/login.html" },
-    { "source": "/nuevo", "destination": "/nuevo.html" },
-    { "source": "/gastos", "destination": "/gastos.html" },
-    { "source": "/balance", "destination": "/balance.html" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
