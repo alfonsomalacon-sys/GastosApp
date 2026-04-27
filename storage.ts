@@ -5,9 +5,10 @@ import {
   doc,
   getDocs,
   orderBy,
-  query
+  query,
+  updateDoc,
 } from 'firebase/firestore';
-import { db } from './firebase';
+import { auth, db } from './firebase';
 
 export interface Gasto {
   id: string;
@@ -20,9 +21,15 @@ export interface Gasto {
   formaPago: 'Efectivo' | 'Transferencia' | 'Tarjeta';
 }
 
+function userCollection() {
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error('No hay usuario autenticado');
+  return collection(db, 'usuarios', uid, 'gastos');
+}
+
 export async function getGastos(): Promise<Gasto[]> {
   try {
-    const q = query(collection(db, 'gastos'), orderBy('fecha', 'desc'));
+    const q = query(userCollection(), orderBy('fecha', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Gasto));
   } catch {
@@ -31,11 +38,19 @@ export async function getGastos(): Promise<Gasto[]> {
 }
 
 export async function saveGasto(gasto: Omit<Gasto, 'id'>): Promise<void> {
-  await addDoc(collection(db, 'gastos'), gasto);
+  await addDoc(userCollection(), gasto);
 }
 
 export async function deleteGasto(id: string): Promise<void> {
-  await deleteDoc(doc(db, 'gastos', id));
+  const uid = auth.currentUser?.uid;
+  if (!uid) return;
+  await deleteDoc(doc(db, 'usuarios', uid, 'gastos', id));
+}
+
+export async function updateGasto(id: string, gasto: Omit<Gasto, 'id'>): Promise<void> {
+  const uid = auth.currentUser?.uid;
+  if (!uid) return;
+  await updateDoc(doc(db, 'usuarios', uid, 'gastos', id), { ...gasto });
 }
 
 export function getMeses(gastos: Gasto[]): string[] {

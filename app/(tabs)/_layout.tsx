@@ -1,20 +1,31 @@
-import { Tabs } from 'expo-router';
+import { router, Tabs } from 'expo-router';
+import { signOut } from 'firebase/auth';
+import { Alert, Text, TouchableOpacity } from 'react-native';
+import { auth } from '../../firebase';
 
 export default function TabLayout() {
+  async function cerrarSesion() {
+    Alert.alert('Cerrar sesión', '¿Seguro que quieres salir?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Salir', style: 'destructive',
+        onPress: async () => {
+          await signOut(auth);
+          router.replace('/login');
+        }
+      }
+    ]);
+  }
+
   return (
     <Tabs
       screenOptions={{
+        headerRight: () => (
+          <TouchableOpacity onPress={cerrarSesion} style={{ marginRight: 16 }}>
+            <Text style={{ color: '#534AB7', fontSize: 14 }}>Salir</Text>
+          </TouchableOpacity>
+        ),
         tabBarActiveTintColor: '#534AB7',
-        tabBarInactiveTintColor: '#888',
-        tabBarStyle: {
-          borderTopWidth: 0.5,
-          borderTopColor: '#e0e0e0',
-          paddingBottom: 8,
-          height: 60,
-        },
-        headerStyle: { backgroundColor: '#1A1A2E' },
-        headerTintColor: '#fff',
-        headerTitleStyle: { fontWeight: '500' },
       }}
     >
       <Tabs.Screen
@@ -22,9 +33,7 @@ export default function TabLayout() {
         options={{
           title: 'Nuevo gasto',
           tabBarLabel: 'Nuevo',
-          tabBarIcon: ({ color }) => (
-            <TabIcon label="+" color={color} />
-          ),
+          tabBarIcon: ({ color }) => <TabIcon label="+" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -32,9 +41,7 @@ export default function TabLayout() {
         options={{
           title: 'Mis gastos',
           tabBarLabel: 'Gastos',
-          tabBarIcon: ({ color }) => (
-            <TabIcon label="≡" color={color} />
-          ),
+          tabBarIcon: ({ color }) => <TabIcon label="=" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -42,9 +49,7 @@ export default function TabLayout() {
         options={{
           title: 'Balance y flujo',
           tabBarLabel: 'Balance',
-          tabBarIcon: ({ color }) => (
-            <TabIcon label="◎" color={color} />
-          ),
+          tabBarIcon: ({ color }) => <TabIcon label="◎" color={color} />,
         }}
       />
     </Tabs>
