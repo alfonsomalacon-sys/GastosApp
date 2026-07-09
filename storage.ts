@@ -86,3 +86,83 @@ export const CATEGORIAS = [
   { id: '19', nombre: 'Lecciones aprendidas', emoji: '📝', subs: [] },
   { id: '20', nombre: 'Honorarios pagados', emoji: '🤝', subs: [] },
 ];
+
+// ── Grupos de categoría (para el resumen mensual y la gráfica) ──────────────
+// Cada categoría de CATEGORIAS cae en exactamente uno de estos grupos.
+export interface GrupoGasto {
+  id: string;
+  nombre: string;
+  color: string;
+  categorias: string[];
+}
+
+export const GRUPOS: GrupoGasto[] = [
+  {
+    id: 'corriente',
+    nombre: 'Gasto corriente',
+    color: '#534AB7',
+    // Renta, agua, luz, gas, mandado, gasolina, educación, etc.
+    categorias: ['Hogar y vivienda', 'Servicios', 'Alimentos', 'Automóvil y transporte', 'Educación'],
+  },
+  {
+    id: 'salud',
+    nombre: 'Salud',
+    color: '#E4572E',
+    categorias: ['Cuidado de la salud'],
+  },
+  {
+    id: 'ocio',
+    nombre: 'Ocio y entretenimiento',
+    color: '#F2A93B',
+    // Entretenimiento, salidas, comidas afuera y alcohol ya están dentro de esta categoría.
+    categorias: ['Entretenimiento'],
+  },
+  {
+    id: 'proteccion',
+    nombre: 'Ahorro y protección',
+    color: '#2E8B57',
+    categorias: ['Inversiones y ahorros', 'Seguros'],
+  },
+  {
+    id: 'deudas',
+    nombre: 'Deudas e impuestos',
+    color: '#6B7280',
+    categorias: ['Deudas repagadas', 'Impuestos'],
+  },
+  {
+    id: 'otros',
+    nombre: 'Otros',
+    color: '#9CA3AF',
+    categorias: [
+      'Ropa', 'Cuidado personal', 'Regalos', 'Vacaciones', 'Gastos de negocios',
+      'Cuidado y dependencias', 'Espiritual', 'Lecciones aprendidas', 'Honorarios pagados',
+    ],
+  },
+];
+
+export function grupoDeCategoria(categoria: string): GrupoGasto {
+  return GRUPOS.find(g => g.categorias.includes(categoria)) || GRUPOS[GRUPOS.length - 1];
+}
+
+export interface ResumenMensual {
+  mes: string; // 'YYYY-MM'
+  total: number;
+  porGrupo: Record<string, number>; // grupoId -> total
+}
+
+// Agrupa los gastos por mes y, dentro de cada mes, por grupo de categoría.
+// Regresa los meses en orden cronológico ascendente (útil para graficar de izq. a der.).
+export function getResumenMensualPorGrupo(gastos: Gasto[]): ResumenMensual[] {
+  const mapa: Record<string, ResumenMensual> = {};
+  gastos.forEach(g => {
+    const mes = g.fecha.slice(0, 7);
+    if (!mapa[mes]) {
+      mapa[mes] = { mes, total: 0, porGrupo: {} };
+      GRUPOS.forEach(gr => { mapa[mes].porGrupo[gr.id] = 0; });
+    }
+    const grupo = grupoDeCategoria(g.categoria);
+    mapa[mes].porGrupo[grupo.id] += g.monto;
+    mapa[mes].total += g.monto;
+  });
+  return Object.values(mapa).sort((a, b) => a.mes.localeCompare(b.mes));
+}
